@@ -175,6 +175,11 @@ void BoxApp::Update(const GameTimer& gt)
     ObjectConstants objConstants;
     XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
     mObjectCB->CopyData(0, objConstants);
+
+    XMMATRIX pyramidWorld = XMMatrixTranslation(0.0f, 0.0f, +3.0f);
+    XMStoreFloat4x4(&objConstants.WorldViewProj,
+        XMMatrixTranspose(pyramidWorld * view * proj));
+    mObjectCB->CopyData(1, objConstants);
 }
 
 void BoxApp::Draw(const GameTimer& gt)
@@ -224,6 +229,20 @@ void BoxApp::Draw(const GameTimer& gt)
     mCommandList->DrawIndexedInstanced(
         mBoxGeo->DrawArgs["box"].IndexCount,
         1, 0, 0, 0);
+
+    auto pyramidCBV = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        mCbvHeap->GetGPUDescriptorHandleForHeapStart(),
+        1,
+        mCbvSrvUavDescriptorSize
+    );
+    mCommandList->SetGraphicsRootDescriptorTable(0, pyramidCBV);
+
+    mCommandList->DrawIndexedInstanced(
+        mBoxGeo->DrawArgs["pyramid"].IndexCount,
+        1,
+        mBoxGeo->DrawArgs["pyramid"].StartIndexLocation,
+        mBoxGeo->DrawArgs["pyramid"].BaseVertexLocation,
+        0);
 
     // Indicate a state transition on the resource usage.
     transition = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -295,7 +314,7 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 void BoxApp::BuildDescriptorHeaps()
 {
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = 1;
+    cbvHeapDesc.NumDescriptors = 2;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     cbvHeapDesc.NodeMask = 0;
@@ -305,22 +324,29 @@ void BoxApp::BuildDescriptorHeaps()
 
 void BoxApp::BuildConstantBuffers()
 {
-    mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
+    mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 2, true);
 
     UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
     D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
     // Offset to the ith object constant buffer in the buffer.
-    int boxCBufIndex = 0;
-    cbAddress += boxCBufIndex * objCBByteSize;
+    for (int i = 0; i < 2; i++) {
+        //int boxCBufIndex = 0;
+        cbAddress += i * objCBByteSize;
 
-    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-    cbvDesc.BufferLocation = cbAddress;
-    cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+        auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
+            mCbvHeap->GetCPUDescriptorHandleForHeapStart(),
+            i,
+            mCbvSrvUavDescriptorSize);
 
-    md3dDevice->CreateConstantBufferView(
-        &cbvDesc,
-        mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+        D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+        cbvDesc.BufferLocation = cbAddress;
+        cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+
+        md3dDevice->CreateConstantBufferView(
+            &cbvDesc,
+            handle);
+    }
 }
 
 void BoxApp::BuildRootSignature()
@@ -378,77 +404,80 @@ void BoxApp::BuildShadersAndInputLayout()
 
 void BoxApp::BuildBoxGeometry()
 {
-    std::array<VPosData, 8> vertices =
+
+    std::array<VPosData, 13> vertices =
     {
+        VPosData({ XMFLOAT3(-1.0f, -1.0f, -1.0f)}),
+        VPosData({ XMFLOAT3(-1.0f, +1.0f, -1.0f)}),
+        VPosData({ XMFLOAT3(+1.0f, +1.0f, -1.0f)}),
+        VPosData({ XMFLOAT3(+1.0f, -1.0f, -1.0f)}),
+        VPosData({ XMFLOAT3(-1.0f, -1.0f, +1.0f)}),
+        VPosData({ XMFLOAT3(-1.0f, +1.0f, +1.0f)}),
+        VPosData({ XMFLOAT3(+1.0f, +1.0f, +1.0f)}),
+        VPosData({ XMFLOAT3(+1.0f, -1.0f, +1.0f)}),
         VPosData({XMFLOAT3(-1.0f, -1.0f, -1.0f)}),
         VPosData({XMFLOAT3(-1.0f, +1.0f, -1.0f)}),
         VPosData({XMFLOAT3(+1.0f, +1.0f, -1.0f)}),
         VPosData({XMFLOAT3(+1.0f, -1.0f, -1.0f)}),
         VPosData({XMFLOAT3(+0.0f, +0.0f, +1.0f)})
-        //VPosData({ XMFLOAT3(-1.0f, -1.0f, -1.0f) }),
-        //VPosData({ XMFLOAT3(-1.0f, +1.0f, -1.0f) }),
-        //VPosData({ XMFLOAT3(+1.0f, +1.0f, -1.0f) }),
-        //VPosData({ XMFLOAT3(+1.0f, -1.0f, -1.0f) }),
-        //VPosData({ XMFLOAT3(-1.0f, -1.0f, +1.0f) }),
-        //VPosData({ XMFLOAT3(-1.0f, +1.0f, +1.0f) }),
-        //VPosData({ XMFLOAT3(+1.0f, +1.0f, +1.0f) }),
-        //VPosData({ XMFLOAT3(+1.0f, -1.0f, +1.0f) })
     };
 
-    std::array<VColorData, 8> colors =
+    std::array<VColorData, 13> colors =
     {
+        VColorData({ XMFLOAT4(Colors::White) }),
+        VColorData({ XMFLOAT4(Colors::Black) }),
+        VColorData({ XMFLOAT4(Colors::Red) }),
+        VColorData({ XMFLOAT4(Colors::Green) }),
+        VColorData({ XMFLOAT4(Colors::Blue) }),
+        VColorData({ XMFLOAT4(Colors::Yellow) }),
+        VColorData({ XMFLOAT4(Colors::Cyan) }),
+        VColorData({ XMFLOAT4(Colors::Magenta) }),
         VColorData({ XMFLOAT4(Colors::Green) }),
         VColorData({ XMFLOAT4(Colors::Green) }),
         VColorData({ XMFLOAT4(Colors::Green) }),
         VColorData({ XMFLOAT4(Colors::Green) }),
         VColorData({ XMFLOAT4(Colors::Red) })
-        //VColorData({ XMFLOAT4(Colors::White) }),
-        //VColorData({ XMFLOAT4(Colors::Black) }),
-        //VColorData({ XMFLOAT4(Colors::Red) }),
-        //VColorData({ XMFLOAT4(Colors::Green) }),
-        //VColorData({ XMFLOAT4(Colors::Blue) }),
-        //VColorData({ XMFLOAT4(Colors::Yellow) }),
-        //VColorData({ XMFLOAT4(Colors::Cyan) }),
-        //VColorData({ XMFLOAT4(Colors::Magenta) })
     };
 
-    std::array<std::uint16_t, 36> indices =
+    std::array<std::uint16_t, 54> indices =
     {
+        // front face
+        0, 1, 2,
+        0, 2, 3,
 
-        0, 1, 2, 
-        3, 0, 2, 
-        2, 1, 4, 
+        // back face
+        4, 6, 5,
+        4, 7, 6,
+
+        // left face
+        4, 5, 1,
+        4, 1, 0,
+
+        // right face
+        3, 2, 6,
+        3, 6, 7,
+
+        // top face
+        1, 5, 6,
+        1, 6, 2,
+
+        // bottom face
+        4, 0, 3,
+        4, 3, 7,
+
+        // Pyramid
+        0, 1, 2,
+        3, 0, 2,
+        2, 1, 4,
         3, 2, 4,
-        1, 0, 4, 
+        1, 0, 4,
         0, 3, 4
-        //// front face
-        //0, 1, 2,
-        //0, 2, 3,
-
-        //// back face
-        //4, 6, 5,
-        //4, 7, 6,
-
-        //// left face
-        //4, 5, 1,
-        //4, 1, 0,
-
-        //// right face
-        //3, 2, 6,
-        //3, 6, 7,
-
-        //// top face
-        //1, 5, 6,
-        //1, 6, 2,
-
-        //// bottom face
-        //4, 0, 3,
-        //4, 3, 7
     };
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(VPosData);
     const UINT vbColorSize = (UINT)colors.size() * sizeof(VColorData);
     const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+    const UINT pbByteSize = (UINT)5 * sizeof(VPosData);
 
     mBoxGeo = std::make_unique<MeshGeometry>();
     mBoxGeo->Name = "boxGeo";
@@ -461,7 +490,7 @@ void BoxApp::BuildBoxGeometry()
 
     ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
     CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
+    
     ThrowIfFailed(D3DCreateBlob(vbColorSize, &mColorGeo->VertexBufferCPU));
     CopyMemory(mColorGeo->VertexBufferCPU->GetBufferPointer(), colors.data(), vbColorSize);
 
@@ -491,11 +520,17 @@ void BoxApp::BuildBoxGeometry()
     mColorGeo->IndexBufferByteSize = ibByteSize;
 
     SubmeshGeometry submesh;
-    submesh.IndexCount = (UINT)indices.size();
+    submesh.IndexCount = 36;//(UINT)indices.size();
     submesh.StartIndexLocation = 0;
     submesh.BaseVertexLocation = 0;
 
+    SubmeshGeometry pyrSubmesh;
+    pyrSubmesh.IndexCount = (UINT)18;
+    pyrSubmesh.StartIndexLocation = 36;
+    pyrSubmesh.BaseVertexLocation = 8;
+
     mBoxGeo->DrawArgs["box"] = submesh;
+    mBoxGeo->DrawArgs["pyramid"] = pyrSubmesh;
 }
 
 void BoxApp::BuildPSO()
