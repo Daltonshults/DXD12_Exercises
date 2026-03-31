@@ -380,53 +380,70 @@ void BoxApp::BuildBoxGeometry()
 {
     std::array<VPosData, 8> vertices =
     {
-        VPosData({ XMFLOAT3(-1.0f, -1.0f, -1.0f) }),
-        VPosData({ XMFLOAT3(-1.0f, +1.0f, -1.0f) }),
-        VPosData({ XMFLOAT3(+1.0f, +1.0f, -1.0f) }),
-        VPosData({ XMFLOAT3(+1.0f, -1.0f, -1.0f) }),
-        VPosData({ XMFLOAT3(-1.0f, -1.0f, +1.0f) }),
-        VPosData({ XMFLOAT3(-1.0f, +1.0f, +1.0f) }),
-        VPosData({ XMFLOAT3(+1.0f, +1.0f, +1.0f) }),
-        VPosData({ XMFLOAT3(+1.0f, -1.0f, +1.0f) })
+        VPosData({XMFLOAT3(-1.0f, -1.0f, -1.0f)}),
+        VPosData({XMFLOAT3(-1.0f, +1.0f, -1.0f)}),
+        VPosData({XMFLOAT3(+1.0f, +1.0f, -1.0f)}),
+        VPosData({XMFLOAT3(+1.0f, -1.0f, -1.0f)}),
+        VPosData({XMFLOAT3(+0.0f, +0.0f, +1.0f)})
+        //VPosData({ XMFLOAT3(-1.0f, -1.0f, -1.0f) }),
+        //VPosData({ XMFLOAT3(-1.0f, +1.0f, -1.0f) }),
+        //VPosData({ XMFLOAT3(+1.0f, +1.0f, -1.0f) }),
+        //VPosData({ XMFLOAT3(+1.0f, -1.0f, -1.0f) }),
+        //VPosData({ XMFLOAT3(-1.0f, -1.0f, +1.0f) }),
+        //VPosData({ XMFLOAT3(-1.0f, +1.0f, +1.0f) }),
+        //VPosData({ XMFLOAT3(+1.0f, +1.0f, +1.0f) }),
+        //VPosData({ XMFLOAT3(+1.0f, -1.0f, +1.0f) })
     };
 
     std::array<VColorData, 8> colors =
     {
-        VColorData({ XMFLOAT4(Colors::White) }),
-        VColorData({ XMFLOAT4(Colors::Black) }),
-        VColorData({ XMFLOAT4(Colors::Red) }),
         VColorData({ XMFLOAT4(Colors::Green) }),
-        VColorData({ XMFLOAT4(Colors::Blue) }),
-        VColorData({ XMFLOAT4(Colors::Yellow) }),
-        VColorData({ XMFLOAT4(Colors::Cyan) }),
-        VColorData({ XMFLOAT4(Colors::Magenta) })
+        VColorData({ XMFLOAT4(Colors::Green) }),
+        VColorData({ XMFLOAT4(Colors::Green) }),
+        VColorData({ XMFLOAT4(Colors::Green) }),
+        VColorData({ XMFLOAT4(Colors::Red) })
+        //VColorData({ XMFLOAT4(Colors::White) }),
+        //VColorData({ XMFLOAT4(Colors::Black) }),
+        //VColorData({ XMFLOAT4(Colors::Red) }),
+        //VColorData({ XMFLOAT4(Colors::Green) }),
+        //VColorData({ XMFLOAT4(Colors::Blue) }),
+        //VColorData({ XMFLOAT4(Colors::Yellow) }),
+        //VColorData({ XMFLOAT4(Colors::Cyan) }),
+        //VColorData({ XMFLOAT4(Colors::Magenta) })
     };
 
     std::array<std::uint16_t, 36> indices =
     {
-        // front face
-        0, 1, 2,
-        0, 2, 3,
 
-        // back face
-        4, 6, 5,
-        4, 7, 6,
+        0, 1, 2, 
+        3, 0, 2, 
+        2, 1, 4, 
+        3, 2, 4,
+        1, 0, 4, 
+        0, 3, 4
+        //// front face
+        //0, 1, 2,
+        //0, 2, 3,
 
-        // left face
-        4, 5, 1,
-        4, 1, 0,
+        //// back face
+        //4, 6, 5,
+        //4, 7, 6,
 
-        // right face
-        3, 2, 6,
-        3, 6, 7,
+        //// left face
+        //4, 5, 1,
+        //4, 1, 0,
 
-        // top face
-        1, 5, 6,
-        1, 6, 2,
+        //// right face
+        //3, 2, 6,
+        //3, 6, 7,
 
-        // bottom face
-        4, 0, 3,
-        4, 3, 7
+        //// top face
+        //1, 5, 6,
+        //1, 6, 2,
+
+        //// bottom face
+        //4, 0, 3,
+        //4, 3, 7
     };
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(VPosData);
