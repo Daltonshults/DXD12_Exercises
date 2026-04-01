@@ -192,10 +192,10 @@ void BoxApp::Draw(const GameTimer& gt)
     // A command list can be reset after it has been added to the command queue via ExecuteCommandList.
     // Reusing the command list reuses memory.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), mPSO.Get()));
-    mScreenViewport.Width = mClientWidth / 2.0;
-
 
     mCommandList->RSSetViewports(1, &mScreenViewport);
+
+    mScissorRect = { mClientWidth / 4, mClientHeight / 4, mClientWidth * 3 / 4, mClientHeight * 3 / 4 };
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
     // Indicate a state transition on the resource usage.
