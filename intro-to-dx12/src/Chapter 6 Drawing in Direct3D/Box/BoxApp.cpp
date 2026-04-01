@@ -176,9 +176,9 @@ void BoxApp::Update(const GameTimer& gt)
     XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
     mObjectCB->CopyData(0, objConstants);
 
-    XMMATRIX pyramidWorld = XMMatrixTranslation(0.0f, 0.0f, +3.0f);
+    XMMATRIX pyrTransform = XMMatrixTranslation(0.0f, 0.0f, +3.0f);
     XMStoreFloat4x4(&objConstants.WorldViewProj,
-        XMMatrixTranspose(pyramidWorld * view * proj));
+        XMMatrixTranspose(pyrTransform * view * proj));
     mObjectCB->CopyData(1, objConstants);
 }
 
@@ -233,15 +233,15 @@ void BoxApp::Draw(const GameTimer& gt)
     auto pyramidCBV = CD3DX12_GPU_DESCRIPTOR_HANDLE(
         mCbvHeap->GetGPUDescriptorHandleForHeapStart(),
         1,
-        mCbvSrvUavDescriptorSize
-    );
+        mCbvSrvUavDescriptorSize);
+
     mCommandList->SetGraphicsRootDescriptorTable(0, pyramidCBV);
 
     mCommandList->DrawIndexedInstanced(
-        mBoxGeo->DrawArgs["pyramid"].IndexCount,
+        mBoxGeo->DrawArgs["pyr"].IndexCount,
         1,
-        mBoxGeo->DrawArgs["pyramid"].StartIndexLocation,
-        mBoxGeo->DrawArgs["pyramid"].BaseVertexLocation,
+        mBoxGeo->DrawArgs["pyr"].StartIndexLocation,
+        mBoxGeo->DrawArgs["pyr"].BaseVertexLocation,
         0);
 
     // Indicate a state transition on the resource usage.
@@ -404,17 +404,16 @@ void BoxApp::BuildShadersAndInputLayout()
 
 void BoxApp::BuildBoxGeometry()
 {
-
     std::array<VPosData, 13> vertices =
     {
-        VPosData({ XMFLOAT3(-1.0f, -1.0f, -1.0f)}),
-        VPosData({ XMFLOAT3(-1.0f, +1.0f, -1.0f)}),
-        VPosData({ XMFLOAT3(+1.0f, +1.0f, -1.0f)}),
-        VPosData({ XMFLOAT3(+1.0f, -1.0f, -1.0f)}),
-        VPosData({ XMFLOAT3(-1.0f, -1.0f, +1.0f)}),
-        VPosData({ XMFLOAT3(-1.0f, +1.0f, +1.0f)}),
-        VPosData({ XMFLOAT3(+1.0f, +1.0f, +1.0f)}),
-        VPosData({ XMFLOAT3(+1.0f, -1.0f, +1.0f)}),
+        VPosData({ XMFLOAT3(-1.0f, -1.0f, -1.0f) }),
+        VPosData({ XMFLOAT3(-1.0f, +1.0f, -1.0f) }),
+        VPosData({ XMFLOAT3(+1.0f, +1.0f, -1.0f) }),
+        VPosData({ XMFLOAT3(+1.0f, -1.0f, -1.0f) }),
+        VPosData({ XMFLOAT3(-1.0f, -1.0f, +1.0f) }),
+        VPosData({ XMFLOAT3(-1.0f, +1.0f, +1.0f) }),
+        VPosData({ XMFLOAT3(+1.0f, +1.0f, +1.0f) }),
+        VPosData({ XMFLOAT3(+1.0f, -1.0f, +1.0f) }),
         VPosData({XMFLOAT3(-1.0f, -1.0f, -1.0f)}),
         VPosData({XMFLOAT3(-1.0f, +1.0f, -1.0f)}),
         VPosData({XMFLOAT3(+1.0f, +1.0f, -1.0f)}),
@@ -441,6 +440,8 @@ void BoxApp::BuildBoxGeometry()
 
     std::array<std::uint16_t, 54> indices =
     {
+
+
         // front face
         0, 1, 2,
         0, 2, 3,
@@ -477,7 +478,6 @@ void BoxApp::BuildBoxGeometry()
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(VPosData);
     const UINT vbColorSize = (UINT)colors.size() * sizeof(VColorData);
     const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-    const UINT pbByteSize = (UINT)5 * sizeof(VPosData);
 
     mBoxGeo = std::make_unique<MeshGeometry>();
     mBoxGeo->Name = "boxGeo";
@@ -490,7 +490,7 @@ void BoxApp::BuildBoxGeometry()
 
     ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
     CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-    
+
     ThrowIfFailed(D3DCreateBlob(vbColorSize, &mColorGeo->VertexBufferCPU));
     CopyMemory(mColorGeo->VertexBufferCPU->GetBufferPointer(), colors.data(), vbColorSize);
 
@@ -520,17 +520,18 @@ void BoxApp::BuildBoxGeometry()
     mColorGeo->IndexBufferByteSize = ibByteSize;
 
     SubmeshGeometry submesh;
-    submesh.IndexCount = 36;//(UINT)indices.size();
+    submesh.IndexCount = (UINT)indices.size();
     submesh.StartIndexLocation = 0;
     submesh.BaseVertexLocation = 0;
 
-    SubmeshGeometry pyrSubmesh;
-    pyrSubmesh.IndexCount = (UINT)18;
-    pyrSubmesh.StartIndexLocation = 36;
-    pyrSubmesh.BaseVertexLocation = 8;
-
     mBoxGeo->DrawArgs["box"] = submesh;
-    mBoxGeo->DrawArgs["pyramid"] = pyrSubmesh;
+
+    SubmeshGeometry pyrMesh;
+    pyrMesh.IndexCount = 18;
+    pyrMesh.StartIndexLocation = 36;
+    pyrMesh.BaseVertexLocation = 8;
+
+    mBoxGeo->DrawArgs["pyr"] = pyrMesh;
 }
 
 void BoxApp::BuildPSO()
@@ -549,7 +550,10 @@ void BoxApp::BuildPSO()
         reinterpret_cast<BYTE*>(mpsByteCode->GetBufferPointer()),
         mpsByteCode->GetBufferSize()
     };
-    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    auto rastState = psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    rastState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    rastState.CullMode = D3D12_CULL_MODE_FRONT;
+    psoDesc.RasterizerState = rastState;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.SampleMask = UINT_MAX;
