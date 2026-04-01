@@ -23,7 +23,7 @@ struct VPosData
 
 struct VColorData
 {
-    XMFLOAT4 Color;
+    XMCOLOR Color;
 };
 
 struct ObjectConstants
@@ -398,7 +398,7 @@ void BoxApp::BuildShadersAndInputLayout()
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        { "COLOR", 0, DXGI_FORMAT_B8G8R8A8_UNORM, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 }
 
@@ -420,22 +420,26 @@ void BoxApp::BuildBoxGeometry()
         VPosData({XMFLOAT3(+1.0f, -1.0f, -1.0f)}),
         VPosData({XMFLOAT3(+0.0f, +0.0f, +1.0f)})
     };
-
+    XMCOLOR black;
+    black.a = 0;
+    black.r = 0;
+    black.g = 0;
+    black.b = 0;
     std::array<VColorData, 13> colors =
     {
-        VColorData({ XMFLOAT4(Colors::White) }),
-        VColorData({ XMFLOAT4(Colors::Black) }),
-        VColorData({ XMFLOAT4(Colors::Red) }),
-        VColorData({ XMFLOAT4(Colors::Green) }),
-        VColorData({ XMFLOAT4(Colors::Blue) }),
-        VColorData({ XMFLOAT4(Colors::Yellow) }),
-        VColorData({ XMFLOAT4(Colors::Cyan) }),
-        VColorData({ XMFLOAT4(Colors::Magenta) }),
-        VColorData({ XMFLOAT4(Colors::Green) }),
-        VColorData({ XMFLOAT4(Colors::Green) }),
-        VColorData({ XMFLOAT4(Colors::Green) }),
-        VColorData({ XMFLOAT4(Colors::Green) }),
-        VColorData({ XMFLOAT4(Colors::Red) })
+        VColorData(XMCOLOR(250.0 / 255.0, 100.0 /255.0, 100.0/255.0, 100.0/255.0)),
+        VColorData(XMCOLOR(250.0 /255.0, 250.0/255.0, 0/255.0, 250.0/255.0)),
+        VColorData(XMCOLOR(250.0/255.0, 0.0/255.0, 250.0/255.0, 1.0)),
+        VColorData(XMCOLOR(250.0/255.0, 0.0/255.0, 0.0, 250.0/255.0)),
+        VColorData(XMCOLOR(250.0/255.0, 250.0/255.0, 0.0, 250.0/255.0)),
+        VColorData(XMCOLOR(250.0/255.0, 0.0, 250.0/255.0, 1.0)),
+        VColorData(XMCOLOR(50.0/255.0, 250.0/255.0, 250.0/255.0, 250.0/255.0)),
+        VColorData(XMCOLOR(50.0/255.0, 50.0/255.0, 250/255.0, 1.0)),
+        VColorData(XMCOLOR(250.0/255.0, 0.0, 0.0, 250.0/255.0)),
+        VColorData(XMCOLOR(255.0 / 255.0, 150/255.0, 0/255.0, 1.0)),
+        VColorData(XMCOLOR(255.0 / 255.0, 0 / 255.0, 102 / 255.0, 1.0)),
+        VColorData(XMCOLOR(0.0, 0.0, 204.0/255.0, 1.0)),
+        VColorData(XMCOLOR(0.204, 0.204, 1.0, 0.816))
     };
 
     std::array<std::uint16_t, 54> indices =
@@ -551,8 +555,8 @@ void BoxApp::BuildPSO()
         mpsByteCode->GetBufferSize()
     };
     auto rastState = psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    rastState.FillMode = D3D12_FILL_MODE_WIREFRAME;
-    rastState.CullMode = D3D12_CULL_MODE_FRONT;
+    //rastState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    //rastState.CullMode = D3D12_CULL_MODE_FRONT;
     psoDesc.RasterizerState = rastState;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
