@@ -30,6 +30,8 @@ struct VColorData
 struct ObjectConstants
 {
     XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
+    XMFLOAT4 gPulseColor = XMFLOAT4(1.0, 0.0, 0.0, 1.0);
+    float gTime = 0.0f;
 };
 
 class BoxApp : public D3DApp
@@ -174,6 +176,9 @@ void BoxApp::Update(const GameTimer& gt)
 
     // Update the constant buffer with the latest worldViewProj matrix.
     ObjectConstants objConstants;
+    objConstants.gTime = gt.TotalTime();
+    //objConstants.gResolution = { (float)mClientWidth, (float)mClientHeight };
+
     XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
     mObjectCB->CopyData(0, objConstants);
 
@@ -195,7 +200,7 @@ void BoxApp::Draw(const GameTimer& gt)
 
     mCommandList->RSSetViewports(1, &mScreenViewport);
 
-    mScissorRect = { mClientWidth / 4, mClientHeight / 4, mClientWidth * 3 / 4, mClientHeight * 3 / 4 };
+    //mScissorRect = { mClientWidth / 4, mClientHeight / 4, mClientWidth * 3 / 4, mClientHeight * 3 / 4 };
     mCommandList->RSSetScissorRects(1, &mScissorRect);
 
     // Indicate a state transition on the resource usage.
