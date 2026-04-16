@@ -29,7 +29,8 @@ cbuffer cbPass : register(b1)
 
 struct VertexIn
 {
-	float3 PosL  : POSITION;
+    float3 PosL : POSITION;
+    float3 Normal : NORMAL;
     float4 Color : COLOR;
 };
 
@@ -39,17 +40,38 @@ struct VertexOut
     float4 Color : COLOR;
 };
 
-VertexOut VS(VertexIn vin)
-{
-	VertexOut vout;
+// VertexOut VS(VertexIn vin)
+// {
+//	VertexOut vout;
 	
 	// Transform to homogeneous clip space.
-    float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
-    vout.PosH = mul(posW, gViewProj);
+    //float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
+    //vout.PosH = mul(posW, gViewProj);
 	
 	// Just pass vertex color into the pixel shader.
-    vout.Color = vin.Color;
+    //vout.Color = float4(sin(gTotalTime), cos(gTotalTime), sin(gTotalTime), 1.0f);
     
+    //return vout;
+//}
+
+VertexOut VS(VertexIn vin)
+{
+    VertexOut vout;
+    vin.PosL.y -= 2.0f;
+    //vin.PosL.z -= 5.0f;
+    float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
+    vout.PosH = mul(posW, gViewProj);
+
+    // Spatial variation (controls pattern)
+    float phase = posW.x + posW.y + posW.z;
+
+    // Time animation
+    float t = gTotalTime;
+
+    // Black ↔ white wave
+    float intensity = 0.5f + 0.5f * sin(phase + t);
+
+    vout.Color = float4(intensity, intensity, intensity, 1.0f);
     return vout;
 }
 
