@@ -143,8 +143,8 @@ private:
     bool mIsWireframe = false;
 
     XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
-    XMFLOAT3 mTarget = { 11.0f, 1.0f, 0.0f };
-    XMFLOAT3 mFocusPoint = { 0.0f, 1.0f, -30.0f };
+    XMFLOAT3 mTarget = {0.0f, 0.0f, 0.0f };
+    XMFLOAT3 mFocusPoint = { 0.0f, 0.0f, 0.0f };
     XMFLOAT4X4 mView = MathHelper::Identity4x4();
     XMFLOAT4X4 mProj = MathHelper::Identity4x4();
 
@@ -352,7 +352,7 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
         mPhi += dy;
 
         // Restrict the angle mPhi.
-        mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
+        mPhi = MathHelper::Clamp(mPhi, 0.2f, MathHelper::Pi - 0.1f );
     }
     else if ((btnState & MK_RBUTTON) != 0)
     {
@@ -371,17 +371,14 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
         float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
         float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
-        float rx = sinf(mTheta);
-        float rz = -cosf(mTheta);
+        // Column 0 = camera right
+        float rx = mView._11, ry = mView._21, rz = mView._31;
+        // Column 1 = camera up
+        float ux = mView._12, uy = mView._22, uz = mView._32;
 
-        float ux = -cosf(mPhi) * cosf(mTheta);
-        float uy = sinf(mPhi);
-        float uz = -cosf(mPhi) * sinf(mTheta);
-
-
-        mFocusPoint.x -= 0.5f * mRadius * (dx * rx - dy * ux);
-        mFocusPoint.y += 0.5f *  mRadius * dy * uy;
-        mFocusPoint.z -= 0.5f * mRadius * (dx * rz - dy * uz);
+        mTarget.x -= 0.1f * mRadius * (dx * rx - dy * ux);
+        mTarget.y += 0.1f * mRadius * dy * uy;
+        mTarget.z -= 0.1f * mRadius * (dx * rz - dy * uz);
 
     }
 
@@ -397,22 +394,19 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
         mIsWireframe = false;
 }
 
+
 void ShapesApp::UpdateCamera(const GameTimer& gt)
 {
-    // Convert Spherical to Cartesian coordinates.
-    mEyePos.x = mRadius * sinf(mPhi) * cosf(mTheta) - mFocusPoint.x;
-    mEyePos.z = mRadius * sinf(mPhi) * sinf(mTheta);
-    mEyePos.y = mRadius * cosf(mPhi) -  mFocusPoint.y;
-    
-    mTarget.x = -mFocusPoint.x;
-    mTarget.y = mFocusPoint.y;
+    mEyePos.x = mRadius * sinf(mPhi) * cosf(mTheta) + mTarget.x;
+    mEyePos.y = mRadius * cosf(mPhi) + mTarget.y;
+    mEyePos.z = mRadius * sinf(mPhi) * sinf(mTheta) + mTarget.z;
 
-
-
-
-    // Build the view matrix.
     XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-    XMVECTOR target = XMVectorSet( mTarget.x, mTarget.y, mTarget.z, 1.0f );
+    XMVECTOR target = XMVectorSet(mTarget.x, mTarget.y, mTarget.z, 1.0f);
+    //XMVECTOR up = (fabsf(cosf(mPhi)) > 0.99f)
+    //    ? XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f)
+    //    : XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
     XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
