@@ -6,7 +6,7 @@
  
 cbuffer cbPerObject : register(b0)
 {
-	float4x4 gWorld; 
+    float4x4 gWorld;
 };
 
 cbuffer cbPass : register(b1)
@@ -36,7 +36,7 @@ struct VertexIn
 
 struct VertexOut
 {
-	float4 PosH  : SV_POSITION;
+    float4 PosH : SV_POSITION;
     float4 Color : COLOR;
 };
 
@@ -57,7 +57,6 @@ struct VertexOut
 VertexOut VS(VertexIn vin)
 {
     VertexOut vout;
-    //vin.PosL.z -= 5.0f;
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
     vout.PosH = mul(posW, gViewProj);
 
@@ -70,6 +69,7 @@ VertexOut VS(VertexIn vin)
     // Black ↔ white wave
     float intensity = 0.5f + 0.5f * sin(phase + t);
 
+    //vout.Color = float4(intensity, intensity, intensity, 1.0f);
     vout.Color = vin.Color;
     return vout;
 }
@@ -78,5 +78,4 @@ float4 PS(VertexOut pin) : SV_Target
 {
     return pin.Color;
 }
-
 

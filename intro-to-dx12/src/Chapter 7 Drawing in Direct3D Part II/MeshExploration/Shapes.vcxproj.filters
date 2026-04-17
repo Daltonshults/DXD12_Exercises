@@ -75,5 +75,8 @@
   <ItemGroup>
     <None Include="DragonSlayerAttemptTwo8.glb" />
     <None Include="DragonSlayerAttemptTwo11.glb" />
+    <None Include="DragonSlayerAttemptTwo13.glb" />
+    <None Include="DragonSlayerAttemptTwo14.glb" />
+    <None Include="DragonSlayerAttemptTwo15.glb" />
   </ItemGroup>
 </Project>

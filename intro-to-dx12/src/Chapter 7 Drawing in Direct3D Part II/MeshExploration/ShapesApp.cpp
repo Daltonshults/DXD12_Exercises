@@ -18,8 +18,9 @@
 #define TINYGLTF3_ENABLE_STB_IMAGE   // enable image decoding
 #include "tiny_gltf_v3.cpp"
 #include <vector>
+#include <cstdlib>
 
-#include <stdio.h>
+#include <stdio.h> 
 #include <string.h>
 
 using Microsoft::WRL::ComPtr;
@@ -142,12 +143,14 @@ private:
     bool mIsWireframe = false;
 
     XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
+    XMFLOAT3 mTarget = { 11.0f, 1.0f, 0.0f };
+    XMFLOAT3 mFocusPoint = { 0.0f, 1.0f, -30.0f };
     XMFLOAT4X4 mView = MathHelper::Identity4x4();
     XMFLOAT4X4 mProj = MathHelper::Identity4x4();
 
     float mTheta = 1.5f * XM_PI;
-    float mPhi = 0.2f * XM_PI;
-    float mRadius = 15.0f;
+    float mPhi = XM_PIDIV2;
+    float mRadius = 75.0f;
 
     int mVertexCount = 0;
     int mTriangleCount = 0;
@@ -363,6 +366,24 @@ void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
         // Restrict the radius.
         mRadius = MathHelper::Clamp(mRadius, 5.0f, 150.0f);
     }
+    else if ((btnState & MK_MBUTTON) != 0)
+    {
+        float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+        float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
+
+        float rx = sinf(mTheta);
+        float rz = -cosf(mTheta);
+
+        float ux = -cosf(mPhi) * cosf(mTheta);
+        float uy = sinf(mPhi);
+        float uz = -cosf(mPhi) * sinf(mTheta);
+
+
+        mFocusPoint.x -= 0.5f * mRadius * (dx * rx - dy * ux);
+        mFocusPoint.y += 0.5f *  mRadius * dy * uy;
+        mFocusPoint.z -= 0.5f * mRadius * (dx * rz - dy * uz);
+
+    }
 
     mLastMousePos.x = x;
     mLastMousePos.y = y;
@@ -379,13 +400,19 @@ void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 void ShapesApp::UpdateCamera(const GameTimer& gt)
 {
     // Convert Spherical to Cartesian coordinates.
-    mEyePos.x = mRadius * sinf(mPhi) * cosf(mTheta);
+    mEyePos.x = mRadius * sinf(mPhi) * cosf(mTheta) - mFocusPoint.x;
     mEyePos.z = mRadius * sinf(mPhi) * sinf(mTheta);
-    mEyePos.y = mRadius * cosf(mPhi);
+    mEyePos.y = mRadius * cosf(mPhi) -  mFocusPoint.y;
+    
+    mTarget.x = -mFocusPoint.x;
+    mTarget.y = mFocusPoint.y;
+
+
+
 
     // Build the view matrix.
     XMVECTOR pos = XMVectorSet(mEyePos.x, mEyePos.y, mEyePos.z, 1.0f);
-    XMVECTOR target = XMVectorZero();
+    XMVECTOR target = XMVectorSet( mTarget.x, mTarget.y, mTarget.z, 1.0f );
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
     XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
@@ -577,7 +604,7 @@ void ShapesApp::BuildShapeGeometry()
     tg3_error_stack_init(&errors);
 
     
-    const char* filename = "DragonSlayerAttemptTwo11.glb";
+    const char* filename = "DragonSlayerAttemptTwo15.glb";
     tg3_error_code result = tg3_parse_file(&model, &errors, filename, (uint32_t)strlen(filename), &opts);
 
     if (result != TG3_OK) {
@@ -648,7 +675,7 @@ void ShapesApp::BuildShapeGeometry()
             vert.Pos = { pos[0], pos[1], -pos[2] };
             // In BuildShapeGeometry, change the color assignment to identify each mesh:
             vert.Color = debugColors[i % 13];  // i = current mesh index
-
+            //vert.Color = XMFLOAT4( DirectX::Colors::Gray);  // i = current mesh index
             vertices1.push_back(vert);
         }
 
@@ -738,7 +765,7 @@ void ShapesApp::BuildPSOs()
     //
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
-    opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
 }
 
@@ -782,7 +809,7 @@ void ShapesApp::BuildRenderItems()
             XMMATRIX T = XMMatrixTranslation(
                 (float)node.translation[0],
                 (float)node.translation[1], 
-                (float)node.translation[2]);
+               -(float)node.translation[2]);
 
             XMMATRIX R = XMMatrixRotationQuaternion(XMVectorSet(
                 -(float)node.rotation[0],

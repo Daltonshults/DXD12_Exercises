@@ -169,6 +169,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DragonSlayerAttemptTwo11.glb" />
+    <None Include="DragonSlayerAttemptTwo13.glb" />
+    <None Include="DragonSlayerAttemptTwo14.glb" />
+    <None Include="DragonSlayerAttemptTwo15.glb" />
     <None Include="DragonSlayerAttemptTwo8.glb" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
