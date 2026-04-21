@@ -610,7 +610,7 @@ void ShapesApp::BuildShapeGeometry()
         if (readingVertices) {
             vertex v{};
             if (ss >> v.Pos.x >> v.Pos.y >> v.Pos.z >> v.Normal.x >> v.Normal.y >> v.Normal.z) {
-                v.Color = XMFLOAT4(DirectX::Colors::Black);
+                v.Color = XMFLOAT4(DirectX::Colors::LightGray);
                 vertices1.push_back(v);
             }
         }
@@ -659,70 +659,11 @@ void ShapesApp::BuildShapeGeometry()
     skullSubmesh.StartIndexLocation = 0;
     skullSubmesh.BaseVertexLocation = 0;
 
-    //SubmeshGeometry boxSubmesh;
-    //boxSubmesh.IndexCount = (UINT)box.Indices32.size();
-    //boxSubmesh.StartIndexLocation = boxIndexOffset;
-    //boxSubmesh.BaseVertexLocation = boxVertexOffset;
-
-    //SubmeshGeometry gridSubmesh;
-    //gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
-    //gridSubmesh.StartIndexLocation = gridIndexOffset;
-    //gridSubmesh.BaseVertexLocation = gridVertexOffset;
-
-    //SubmeshGeometry sphereSubmesh;
-    //sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
-    //sphereSubmesh.StartIndexLocation = sphereIndexOffset;
-    //sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
-
-    //SubmeshGeometry cylinderSubmesh;
-    //cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
-    //cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
-    //cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
-
-    //
-    // Extract the vertex elements we are interested in and pack the
-    // vertices of all the meshes into one vertex buffer.
-    //
     auto totalVertexCount = vertexCount;
 
-    //auto totalVertexCount =
-    //    box.Vertices.size() +
-    //    grid.Vertices.size() +
-    //    sphere.Vertices.size() +
-    //    cylinder.Vertices.size();
 
     std::vector<Vertex> vertices(totalVertexCount);
 
-    //UINT k = 0;
-    //for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
-    //{
-    //    vertices[k].Pos = box.Vertices[i].Position;
-    //    vertices[k].Color = XMFLOAT4(DirectX::Colors::DarkGreen);
-    //}
-
-    //for (size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
-    //{
-    //    vertices[k].Pos = grid.Vertices[i].Position;
-    //    vertices[k].Color = XMFLOAT4(DirectX::Colors::ForestGreen);
-    //}
-
-    //for (size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
-    //{
-    //    vertices[k].Pos = sphere.Vertices[i].Position;
-    //    vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
-    //}
-
-    //for (size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
-    //{
-    //    vertices[k].Pos = cylinder.Vertices[i].Position;
-    //    vertices[k].Color = XMFLOAT4(DirectX::Colors::SteelBlue);
-    //}
-
-    //std::vector<std::uint16_t> indices;
-    //indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
-    //indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
-    //indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
-    //indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 
     const UINT vbByteSize = (UINT)vertices1.size() * sizeof(vertex);
     const UINT ibByteSize = (UINT)indices1.size() * sizeof(std::uint32_t);
@@ -748,10 +689,6 @@ void ShapesApp::BuildShapeGeometry()
     geo->IndexBufferByteSize = ibByteSize;
 
     geo->DrawArgs["skull"] = skullSubmesh;
-    //geo->DrawArgs["box"] = boxSubmesh;
-    //geo->DrawArgs["grid"] = gridSubmesh;
-    //geo->DrawArgs["sphere"] = sphereSubmesh;
-    //geo->DrawArgs["cylinder"] = cylinderSubmesh;
 
     mGeometries[geo->Name] = std::move(geo);
 }
@@ -778,7 +715,7 @@ void ShapesApp::BuildPSOs()
     };
     opaquePsoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     opaquePsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-    opaquePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+    opaquePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
     opaquePsoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     opaquePsoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     opaquePsoDesc.SampleMask = UINT_MAX;
