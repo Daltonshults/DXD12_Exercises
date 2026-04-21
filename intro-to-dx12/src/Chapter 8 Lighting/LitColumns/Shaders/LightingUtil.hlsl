@@ -61,16 +61,26 @@ float3 BlinnPhong(float3 lightStrength, float3 lightVec, float3 normal, float3 t
 //---------------------------------------------------------------------------------------
 // Evaluates the lighting equation for directional lights.
 //---------------------------------------------------------------------------------------
-float3 ComputeDirectionalLight(Light L, Material mat, float3 normal, float3 toEye)
+float3 ComputeDirectionalLight(Light L, Material mat, float3 normal, float3 toEye, float totalTime)
 {
     // The light vector aims opposite the direction the light rays travel.
     float3 lightVec = -L.Direction;
 
     // Scale light down by Lambert's cosine law.
     float ndotl = max(dot(lightVec, normal), 0.0f);
-    float3 lightStrength = L.Strength * ndotl;
+    // float3 lightStrength = L.Strength * ndotl;
+    
+    //float t = sin(L.TotalTIme) * 0.5 + 0.5;
+    //float3 strength = lerp(float3(1.0, 0.2, 0.1), float(0.1, 0.4, 1.0) * ndotl);
+    //strength.x = sin(L.TotalTIme);
+    //float3 strength = (t, 0.0f, 0.0f);
+    //float3 lightStrength = strength * ndotl;
+    float t = sin(totalTime) * 0.5f + 0.5f; // remap to [0, 1]
+    //float3 strength = lerp(float3(1, 0.2, 0.1), float3(0.1, 0.4, 1), t) * ndotl;
+    // float3 strength = lerp(float3(1, 0.2, 0.1), float3(0.1, 0.4, 1), t) * ndotl;
+    float3 strength = float3(t, .0f, .0f) * ndotl;
 
-    return BlinnPhong(lightStrength, lightVec, normal, toEye, mat);
+    return BlinnPhong(strength, lightVec, normal, toEye, mat);
 }
 
 //---------------------------------------------------------------------------------------
@@ -137,7 +147,8 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 
 float4 ComputeLighting(Light gLights[MaxLights], Material mat,
                        float3 pos, float3 normal, float3 toEye,
-                       float3 shadowFactor)
+                       float3 shadowFactor,
+                       float totalTime)
 {
     float3 result = 0.0f;
 
@@ -146,7 +157,7 @@ float4 ComputeLighting(Light gLights[MaxLights], Material mat,
 #if (NUM_DIR_LIGHTS > 0)
     for(i = 0; i < NUM_DIR_LIGHTS; ++i)
     {
-        result += shadowFactor[i] * ComputeDirectionalLight(gLights[i], mat, normal, toEye);
+        result += shadowFactor[i] * ComputeDirectionalLight(gLights[i], mat, normal, toEye, totalTime);
     }
 #endif
 

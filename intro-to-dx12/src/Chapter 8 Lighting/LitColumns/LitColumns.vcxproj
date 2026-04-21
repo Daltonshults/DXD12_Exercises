@@ -164,6 +164,10 @@
     <ClInclude Include="..\..\Common\UploadBuffer.h" />
     <ClInclude Include="FrameResource.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Default.hlsl" />
+    <None Include="Shaders\LightingUtil.hlsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
