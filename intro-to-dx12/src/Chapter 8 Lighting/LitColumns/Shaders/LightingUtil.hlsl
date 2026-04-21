@@ -68,16 +68,9 @@ float3 ComputeDirectionalLight(Light L, Material mat, float3 normal, float3 toEy
 
     // Scale light down by Lambert's cosine law.
     float ndotl = max(dot(lightVec, normal), 0.0f);
-    // float3 lightStrength = L.Strength * ndotl;
-    
-    //float t = sin(L.TotalTIme) * 0.5 + 0.5;
-    //float3 strength = lerp(float3(1.0, 0.2, 0.1), float(0.1, 0.4, 1.0) * ndotl);
-    //strength.x = sin(L.TotalTIme);
-    //float3 strength = (t, 0.0f, 0.0f);
-    //float3 lightStrength = strength * ndotl;
+
     float t = sin(totalTime) * 0.5f + 0.5f; // remap to [0, 1]
-    //float3 strength = lerp(float3(1, 0.2, 0.1), float3(0.1, 0.4, 1), t) * ndotl;
-    // float3 strength = lerp(float3(1, 0.2, 0.1), float3(0.1, 0.4, 1), t) * ndotl;
+
     float3 strength = float3(t, .0f, .0f) * ndotl;
 
     return BlinnPhong(strength, lightVec, normal, toEye, mat);
